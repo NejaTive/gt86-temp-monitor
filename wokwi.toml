@@ -1,0 +1,8 @@
+# Wokwi extension (Cursor) — only this path; no browser copy needed.
+# 1) pio run -e esp32dev_wokwi_tft
+# 2) F1 → "Wokwi: Start Simulator"
+
+[wokwi]
+version = 1
+firmware = '.pio/build/esp32dev_wokwi_tft/firmware.bin'
+elf = '.pio/build/esp32dev_wokwi_tft/firmware.elf'

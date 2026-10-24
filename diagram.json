@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "author": "GT86 Temperature Monitor",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ili9341",
+      "id": "lcd1",
+      "top": -40,
+      "left": -320,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot1",
+      "top": 40,
+      "left": 250,
+      "attrs": { "value": "0" }
+    }
+  ],
+  "connections": [
+    ["esp:TX", "$serialMonitor:RX", "", []],
+    ["esp:RX", "$serialMonitor:TX", "", []],
+    ["lcd1:VCC", "esp:3V3", "red", []],
+    ["lcd1:GND", "esp:GND.1", "black", []],
+    ["lcd1:SCK", "esp:18", "gray", []],
+    ["lcd1:MOSI", "esp:23", "green", []],
+    ["lcd1:CS", "esp:15", "violet", []],
+    ["lcd1:D/C", "esp:2", "orange", []],
+    ["lcd1:LED", "esp:3V3", "pink", []],
+    ["pot1:GND", "esp:GND.1", "black", []],
+    ["pot1:VCC", "esp:3V3", "red", []],
+    ["pot1:SIG", "esp:34", "orange", []]
+  ],
+  "dependencies": {}
+}
