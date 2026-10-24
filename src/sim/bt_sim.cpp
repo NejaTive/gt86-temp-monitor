@@ -14,10 +14,9 @@ static unsigned long stateSinceMs = 0;
 static int lastRaw = HIGH;
 static unsigned long lastEdgeMs = 0;
 
-static void setState(BtSimState next, const __FlashStringHelper *logMsg) {
+static void setState(BtSimState next) {
   state = next;
   stateSinceMs = millis();
-  Serial.println(logMsg);
 }
 
 void btSimBegin() {
@@ -28,11 +27,6 @@ void btSimBegin() {
   lastRaw = digitalRead(PIN_BTN_BT_SIM);
   state = ST_DOWN;
   stateSinceMs = millis();
-  Serial.printf("[BT-SIM] button GPIO%d: press = connect/disconnect\r\n",
-                PIN_BTN_BT_SIM);
-  Serial.printf("[BT-SIM] connect delay: Connecting %u ms, Starting %u ms\r\n",
-                (unsigned)BT_SIM_CONNECT_MS, (unsigned)BT_SIM_ELM_MS);
-  Serial.println(F("[BT-SIM] start: Offline"));
 }
 
 void btSimPoll() {
@@ -48,18 +42,18 @@ void btSimPoll() {
     lastEdgeMs = now;
     if (raw == LOW && lastRaw == HIGH) {
       if (state == ST_DOWN) {
-        setState(ST_BT, F("[BT-SIM] Connecting"));
+        setState(ST_BT);
       } else {
-        setState(ST_DOWN, F("[BT-SIM] Offline"));
+        setState(ST_DOWN);
       }
     }
     lastRaw = raw;
   }
 
   if (state == ST_BT && (now - stateSinceMs) >= BT_SIM_CONNECT_MS) {
-    setState(ST_ELM, F("[BT-SIM] Starting (ELM)"));
+    setState(ST_ELM);
   } else if (state == ST_ELM && (now - stateSinceMs) >= BT_SIM_ELM_MS) {
-    setState(ST_UP, F("[BT-SIM] Online"));
+    setState(ST_UP);
   }
 }
 

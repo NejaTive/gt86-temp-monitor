@@ -11,7 +11,6 @@
 #include "obd_client.h"
 
 static unsigned long lastUiMs = 0;
-static unsigned long lastLogMs = 0;
 static unsigned long lastBlinkMs = 0;
 static bool aliveOn = true;
 
@@ -23,12 +22,6 @@ void setup() {
     pinMode(PIN_STATUS_LED, OUTPUT);
     digitalWrite(PIN_STATUS_LED, LOW);
   }
-
-  Serial.println();
-  Serial.println(F("GT86 Temperature Monitor"));
-  Serial.printf("Green from %d C, red from %d C\r\n", TEMP_GREEN_FROM_C,
-                TEMP_RED_FROM_C);
-  Serial.println(F("Mode: OBD (Bluetooth Classic SPP + ELM)"));
 
   obdClientBegin();
   displayBegin();
@@ -56,15 +49,5 @@ void loop() {
     st.status = reading.status;
     displayShow(st);
     displayHeartbeat(aliveOn);
-  }
-
-  if (now - lastLogMs >= 1000) {
-    lastLogMs = now;
-    const ObdReading reading = obdClientReading();
-    Serial.printf("[UI] Coolant=%d%s  Oil=%d%s  status=%s\r\n",
-                  (int)lroundf(reading.coolantC),
-                  reading.coolantStale ? "*" : "",
-                  (int)lroundf(reading.oilC), reading.oilStale ? "*" : "",
-                  reading.status ? reading.status : "");
   }
 }

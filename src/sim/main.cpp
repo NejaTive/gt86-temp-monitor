@@ -13,26 +13,17 @@
 #include "temp_sim.h"
 
 static unsigned long lastUiMs = 0;
-static unsigned long lastLogMs = 0;
 static unsigned long lastBlinkMs = 0;
 static bool aliveOn = true;
 
 void setup() {
-  Serial.begin(SERIAL_BAUD);
+  Serial.begin(SERIAL_BAUD);  // для опционального ввода "c 95" / "o 110"
   delay(500);
 
   if (PIN_STATUS_LED >= 0) {
     pinMode(PIN_STATUS_LED, OUTPUT);
     digitalWrite(PIN_STATUS_LED, LOW);
   }
-
-  Serial.println();
-  Serial.println(F("GT86 Temperature Monitor"));
-  Serial.printf("Green from %d C, red from %d C\r\n", TEMP_GREEN_FROM_C,
-                TEMP_RED_FROM_C);
-  Serial.println(F("Mode: SIM (2 pots: coolant GPIO34, oil GPIO35)"));
-  Serial.println(F("Serial: \"c 95\" / \"o 110\" or one number for both"));
-  Serial.println(F("BT-SIM: button = Connecting→Starting→Online / Offline"));
 
   tempSimBegin();
   simControlsBegin();
@@ -71,15 +62,5 @@ void loop() {
     }
     displayShow(st);
     displayHeartbeat(aliveOn);
-  }
-
-  if (now - lastLogMs >= 1000) {
-    lastLogMs = now;
-    Serial.printf("[SIM] bt=%s  Coolant=%d C  Oil=%d C\r\n",
-                  btSimConnected() ? "up" : "down",
-                  btSimConnected() ? (int)lroundf(tempSimReading().coolantC)
-                                   : -999,
-                  btSimConnected() ? (int)lroundf(tempSimReading().oilC)
-                                   : -999);
   }
 }

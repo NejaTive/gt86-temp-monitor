@@ -4,7 +4,6 @@
 #include "obd_parse.h"
 #include "ui_status.h"
 
-#include <ctype.h>
 #include <string.h>
 
 // ---------------------------------------------------------------------------
@@ -68,7 +67,6 @@ static bool accumulateRx() {
       rxBuf[rxLen] = '\0';
     }
     if (ch == '>') {
-      Serial.printf("[BT<<] %s\r\n", rxBuf);
       return true;
     }
   }
@@ -83,18 +81,15 @@ static void applyCoolant(int c) {
   coolantC = (float)c;
   coolantAtMs = millis();
   coolantEver = true;
-  Serial.printf("[OBD] Coolant=%d C  (Serial: ответ 41 05)\r\n", c);
 }
 
 static void applyOil(int c) {
   oilC = (float)c;
   oilAtMs = millis();
   oilEver = true;
-  Serial.printf("[OBD] Oil=%d C  (Serial: ответ 62 10 E7)\r\n", c);
 }
 
-static void startReconnect(const char *why) {
-  Serial.printf("[OBD] reconnect: %s\r\n", why);
+static void startReconnect() {
   obdBtDisconnect();
   setStatus(UI_STATUS_OFFLINE);
   setState(ST_WAIT_RECONNECT);
@@ -118,12 +113,6 @@ void obdClientBegin() {
   coolantEver = false;
   oilEver = false;
   setStatus(UI_STATUS_CONNECTING);
-  Serial.println(F("[OBD] begin — Classic SPP + ELM"));
-  Serial.printf("[OBD] target BT name=\"%s\" PIN=%s\r\n", OBD_BT_NAME,
-                OBD_BT_PIN);
-  Serial.println(F("[OBD] Check coolant: send 0105, expect 41 05 <byte>"));
-  Serial.println(F("[OBD] Check oil: ATSH7E0 then 2210E7, expect 62 10 E7 <byte>"));
-  Serial.println(F("[OBD] Oil PID is 22 10 E7 — NOT 01 5C"));
   if (!obdBtBegin()) {
     setStatus(UI_STATUS_OFFLINE);
     setState(ST_WAIT_RECONNECT);
@@ -137,7 +126,7 @@ void obdClientPoll() {
 
   // Обрыв линка в любом состоянии после connect
   if (state >= ST_ELM_ATZ && state <= ST_WAIT_OIL && !obdBtIsConnected()) {
-    startReconnect("link lost");
+    startReconnect();
     return;
   }
 
@@ -165,35 +154,18 @@ void obdClientPoll() {
         setState(ST_ELM_ATI);
         obdBtSendLine("ATI");
       } else if (timedOut(OBD_RESPONSE_TIMEOUT_MS)) {
-        startReconnect("ATZ timeout");
+        startReconnect();
       }
       break;
 
     case ST_ELM_ATI:
       if (accumulateRx()) {
-        // Логируем сырой ATI — глазами видно ELM или нет
-        Serial.printf("[OBD] ATI: %s\r\n", rxBuf);
-        // Простая проверка без strcasestr (портируемость)
-        bool looksElm = (strchr(rxBuf, '>') != nullptr);
-        for (char *p = rxBuf; *p; ++p) {
-          const char c = (char)toupper((unsigned char)*p);
-          if ((c == 'E' && toupper((unsigned char)p[1]) == 'L' &&
-               toupper((unsigned char)p[2]) == 'M') ||
-              (c == 'O' && toupper((unsigned char)p[1]) == 'B' &&
-               toupper((unsigned char)p[2]) == 'D')) {
-            looksElm = true;
-            break;
-          }
-        }
-        if (!looksElm) {
-          Serial.println(F("[OBD] ATI не похож на ELM — всё равно пробуем AT-путь"));
-        }
         setupStep = 0;
         setState(ST_ELM_SETUP);
         clearRx();
         obdBtSendLine(kSetupCmds[0]);
       } else if (timedOut(OBD_RESPONSE_TIMEOUT_MS)) {
-        startReconnect("ATI timeout");
+        startReconnect();
       }
       break;
 
@@ -209,7 +181,7 @@ void obdClientPoll() {
           obdBtSendLine(kSetupCmds[setupStep]);
         }
       } else if (timedOut(OBD_RESPONSE_TIMEOUT_MS)) {
-        startReconnect("ELM setup timeout");
+        startReconnect();
       }
       break;
 
@@ -232,14 +204,10 @@ void obdClientPoll() {
         if (st == OBD_PARSE_OK) {
           applyCoolant(c);
         } else if (st == OBD_PARSE_NO_DATA) {
-          Serial.println(F("[OBD] Coolant NO DATA"));
           setStatus(UI_STATUS_NO_DATA);
-        } else {
-          Serial.println(F("[OBD] Coolant parse miss — см. [BT<<]"));
         }
         setState(ST_POLL_OIL);
       } else if (timedOut(OBD_RESPONSE_TIMEOUT_MS)) {
-        Serial.println(F("[OBD] Coolant timeout"));
         setStatus(UI_STATUS_TIMEOUT);
         setState(ST_POLL_OIL);  // пробуем масло в том же цикле
       }
@@ -260,15 +228,11 @@ void obdClientPoll() {
           applyOil(c);
           setStatus(UI_STATUS_ONLINE);
         } else if (st == OBD_PARSE_NO_DATA) {
-          Serial.println(F("[OBD] Oil NO DATA (не путать с 01 5C)"));
           setStatus(UI_STATUS_NO_DATA);
-        } else {
-          Serial.println(F("[OBD] Oil parse miss — см. [BT<<]"));
         }
         lastPollDoneMs = millis();
         setState(ST_POLL_COOLANT);
       } else if (timedOut(OBD_RESPONSE_TIMEOUT_MS)) {
-        Serial.println(F("[OBD] Oil timeout"));
         setStatus(UI_STATUS_TIMEOUT);
         lastPollDoneMs = millis();
         setState(ST_POLL_COOLANT);
@@ -308,4 +272,3 @@ ObdReading obdClientReading() {
 
   return r;
 }
-

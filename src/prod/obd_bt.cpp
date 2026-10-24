@@ -22,16 +22,11 @@ bool obdBtBegin() {
   serialBt.disableSSP();
   // true = master: сами подключаемся к адаптеру
   if (!serialBt.begin(OBD_BT_LOCAL_NAME, true)) {
-    Serial.println(F("[BT] begin failed"));
     return false;
   }
   const uint8_t pinLen = (uint8_t)strlen(OBD_BT_PIN);
-  if (!serialBt.setPin(OBD_BT_PIN, pinLen)) {
-    Serial.println(F("[BT] setPin failed"));
-  }
+  serialBt.setPin(OBD_BT_PIN, pinLen);
   begun = true;
-  Serial.printf("[BT] master \"%s\", PIN %s\r\n", OBD_BT_LOCAL_NAME,
-                OBD_BT_PIN);
   return true;
 }
 
@@ -40,10 +35,7 @@ bool obdBtConnect() {
     return false;
   }
   // Внимание: connect по имени может занять до ~30 с (поиск BT).
-  Serial.printf("[BT] connecting to \"%s\"...\r\n", OBD_BT_NAME);
-  const bool ok = serialBt.connect(String(OBD_BT_NAME));
-  Serial.println(ok ? F("[BT] connected") : F("[BT] connect failed"));
-  return ok;
+  return serialBt.connect(String(OBD_BT_NAME));
 }
 
 bool obdBtIsConnected() { return begun && serialBt.connected(); }
@@ -60,7 +52,6 @@ void obdBtSendLine(const char *line) {
   }
   serialBt.print(line);
   serialBt.print('\r');
-  Serial.printf("[BT>>] %s\r\n", line);
 }
 
 int obdBtAvailable() {

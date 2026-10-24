@@ -123,19 +123,16 @@ Only with your explicit OK (needs a connected board):
 
 ```bash
 pio run -e esp32dev -t upload
-pio device monitor --baud 115200
 ```
 
-### How to verify PIDs in Serial Monitor
+Debug Serial output is disabled. Check behaviour on the **TFT** (status + °C). In SIM you can still type `c 95` / `o 110` in the Serial panel to set temps (optional; pots work without it).
 
-1. Set `OBD_BT_NAME` / `OBD_BT_PIN` in `include/prod/config_prod.h`, upload, open monitor at 115200.
-2. Watch `[BT]` / `[OBD]` / `[BT<<]` lines.
-3. **Coolant:** firmware sends `0105`; expect a line containing `41 05` then a data byte.  
-   °C = byte − 40 (example `7E80341056D` → 69 °C).
-4. **Oil:** after `ATSH7E0`, firmware sends `2210E7`; expect `62 10 E7` then a data byte.  
-   °C = byte − 40 (example `7E8046210E76E` → 70 °C).  
-   Do **not** use `01 5C` (NO DATA on this car).
-5. UI: live `NN C`, stale `NN* C`, missing `-- C`; status e.g. `Connecting` / `Online` / `Offline`.
+### How to verify OBD on the car
+
+1. Set `OBD_BT_NAME` / `OBD_BT_PIN` in `include/prod/config_prod.h`, upload.
+2. On the TFT: status should go `Connecting` → `Starting` → `Online`; values `NN C` / stale `NN* C` / missing `-- C`.
+3. Firmware asks coolant `0105` and oil `2210E7` (after `ATSH7E0`). Do **not** use oil PID `01 5C` (NO DATA on this car).
+4. Optional cross-check with Car Scanner (phone disconnected from the adapter).
 
 First BT connect by name can take up to ~30 s (device inquiry).
 
