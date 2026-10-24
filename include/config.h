@@ -1,10 +1,8 @@
 /**
  * Hardware + UI configuration for GT86 Temperature Monitor
  *
- * IMPORTANT:
- * - Do NOT invent pin numbers for the real car display.
- * - HW_PROFILE 0 = real ESP32 DevKit (TFT pins TBD, display code off).
- * - HW_PROFILE 1 = Wokwi / sim wiring (NOT for your physical module).
+ * HW_PROFILE 0 = real ESP32 DevKit + ST7789V 1.54" (agreed wiring below)
+ * HW_PROFILE 1 = Wokwi simulator (ILI9341 stand-in + pot; same TFT pins as car)
  */
 
 #pragma once
@@ -32,7 +30,8 @@
 #endif
 
 // ---------------------------------------------------------------------------
-// Temperature simulation (manual pot only — NOT OBD)
+// Temperature simulation (potentiometer) — DEV / Wokwi only
+// On real car (HW_PROFILE 0) pot is disabled; data will come from OBD later.
 // ---------------------------------------------------------------------------
 #ifndef ENABLE_TEMP_SIM
 #define ENABLE_TEMP_SIM 1
@@ -46,53 +45,30 @@
 #define TEMP_SIM_MAX_C 120
 #endif
 
-#if HW_PROFILE == 1
-#define PIN_STATUS_LED -1  // no LED on Wokwi diagram
+// ---------------------------------------------------------------------------
+// TFT SPI pinout (same on car and Wokwi stand)
+//   SCL→D18  SDA→D23  CS→D5  DC→D2  RES→D4  BLK→3V3
+// Onboard LED shares GPIO2 with DC — do not use as status LED
+// ---------------------------------------------------------------------------
+#define PIN_STATUS_LED -1
 #define PIN_TFT_SCLK 18
 #define PIN_TFT_MOSI 23
-#define PIN_TFT_CS 15
+#define PIN_TFT_CS 5
 #define PIN_TFT_DC 2
-#define PIN_TFT_RST -1  // unused on Wokwi ILI9341 part
+#define PIN_TFT_RST 4
 #define PIN_TFT_BL -1
 #define ENABLE_TFT 1
-// wokwi-ili9341 panel is 240x320 (not the future 240x240 ST7789)
+
+#if HW_PROFILE == 1
+// ----- Wokwi (ILI9341 stand-in + pot on GPIO34) -----
 #define TFT_WIDTH 240
 #define TFT_HEIGHT 320
-#define PIN_POT_TEMP 34  // manual temperature knob
+#define PIN_POT_TEMP 34
 
 #else
-#ifndef PIN_STATUS_LED
-#define PIN_STATUS_LED 2
-#endif
-#ifndef PIN_TFT_SCLK
-#define PIN_TFT_SCLK -1
-#endif
-#ifndef PIN_TFT_MOSI
-#define PIN_TFT_MOSI -1
-#endif
-#ifndef PIN_TFT_CS
-#define PIN_TFT_CS -1
-#endif
-#ifndef PIN_TFT_DC
-#define PIN_TFT_DC -1
-#endif
-#ifndef PIN_TFT_RST
-#define PIN_TFT_RST -1
-#endif
-#ifndef PIN_TFT_BL
-#define PIN_TFT_BL -1
-#endif
-#ifndef ENABLE_TFT
-#define ENABLE_TFT 0
-#endif
-#ifndef TFT_WIDTH
+// ----- Real hardware: 1.54" IPS 240x240 ST7789V -----
 #define TFT_WIDTH 240
-#endif
-#ifndef TFT_HEIGHT
 #define TFT_HEIGHT 240
-#endif
-// No pot on real board yet — Serial: type a number 0…120 + Enter
-#ifndef PIN_POT_TEMP
-#define PIN_POT_TEMP -1
-#endif
+#define PIN_POT_TEMP -1  // no pot on car build
+
 #endif  // HW_PROFILE

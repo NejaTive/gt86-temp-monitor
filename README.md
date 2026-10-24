@@ -8,8 +8,8 @@ Target hardware:
 
 - **MCU:** ESP32-WROOM-32 (DevKit V1), Bluetooth Classic
 - **OBD-II:** ROKODIL ScanX
-- **Display:** TFT IPS 1.54″ 240×240 (likely ST7789, SPI) — pinout not finalized yet
-- **ESP32 power:** car USB
+- **Display:** TFT IPS 1.54″ 240×240 **ST7789V** (SPI) — pinout agreed (see below)
+- **ESP32 power:** car USB (backlight follows USB/ACC power)
 
 Simulation is via the **Wokwi extension in Cursor / VS Code**.
 
@@ -53,9 +53,7 @@ Then: `F1` → **Wokwi: Start Simulator**.
 
 Root files required: `wokwi.toml` + `diagram.json` (already present).
 
-The schematic uses **ILI9341** (built into Wokwi). The real module is planned as ST7789 — car pins remain TBD in `config.h`.
-
-Without display (Serial/LED only): `pio run -e esp32dev` and point `wokwi.toml` at `.pio/build/esp32dev/`.
+The simulator schematic uses **ILI9341** (built into Wokwi). The real module is **ST7789V**. TFT GPIO pinout matches the car table below; Wokwi also has a potentiometer on GPIO34.
 
 ---
 
@@ -65,8 +63,8 @@ Installed under `~/.platformio/penv/bin` (`pio` on PATH via `~/.zshrc`).
 
 ```bash
 pio --version
-pio run -e esp32dev              # real board, TFT off
-pio run -e esp32dev_wokwi_tft    # simulator / display profile
+pio run -e esp32dev              # real board + ST7789V
+pio run -e esp32dev_wokwi_tft    # Wokwi simulator
 ```
 
 ---
@@ -80,22 +78,29 @@ pio device monitor --baud 115200
 
 ---
 
-## GPIO
+## GPIO / real display wiring (agreed)
 
-All pins live in [`include/config.h`](include/config.h).
+All pins in [`include/config.h`](include/config.h). ESP32 from car USB; **BLK → 3V3**.
 
-- Profile **0** (`esp32dev`): LED GPIO 2; TFT = TBD.
-- Profile **1** (`esp32dev_wokwi_tft`): pins match the Wokwi schematic; LED on 13.
+| ST7789V | ESP32 DevKit |
+|---------|--------------|
+| GND | GND |
+| VCC | 3V3 |
+| SCL | D18 |
+| SDA | D23 |
+| RES | D4 |
+| DC | D2 |
+| CS | D5 |
+| BLK | 3V3 |
 
-Do not copy Wokwi pins onto a physical display without checking the module.
+Profile **1** (`esp32dev_wokwi_tft`) uses the same TFT pins; only the chip driver and pot differ.
 
 ---
 
 ## Roadmap
 
-1. UI in the Wokwi extension (potentiometer, colors, OVERHEAT).
-2. Real ESP32 + ST7789 pinout.
-3. Bluetooth → ScanX; coolant first, then oil after FA20 validation.
+1. Wire/flash real hardware per the table above (with consent).
+2. Bluetooth → ScanX; coolant `01 05`, oil `22 10 E7` per the project spec.
 
 ---
 

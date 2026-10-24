@@ -8,8 +8,8 @@
 
 - **Контроллер:** ESP32-WROOM-32 (DevKit V1), Bluetooth Classic
 - **OBD-II:** ROKODIL ScanX
-- **Дисплей:** TFT IPS 1,54″ 240×240 (предположительно ST7789, SPI) — распиновка пока не зафиксирована
-- **Питание ESP32:** штатный USB автомобиля
+- **Дисплей:** TFT IPS 1,54″ 240×240 **ST7789V** (SPI) — распиновка согласована (см. ниже)
+- **Питание ESP32:** штатный USB автомобиля (подсветка вместе с питанием)
 
 Симуляция — только через **расширение Wokwi в Cursor \ VS Code**.
 
@@ -53,9 +53,7 @@ pio run -e esp32dev_wokwi_tft    # прошивка с TFT (для схемы с
 
 Нужны файлы в корне: `wokwi.toml` + `diagram.json` (уже есть).
 
-В схеме дисплей — **ILI9341** (встроенный в Wokwi). Реальный модуль планируется как ST7789 — пины для машины по-прежнему TBD в `config.h`.
-
-Без экрана (только Serial/LED): `pio run -e esp32dev` и в `wokwi.toml` пути на `.pio/build/esp32dev/`.
+В схеме симулятора дисплей — **ILI9341** (встроенный в Wokwi). Реальный модуль — **ST7789V**. GPIO TFT совпадает с таблицей ниже; в Wokwi дополнительно потенциометр на GPIO34.
 
 ---
 
@@ -65,8 +63,8 @@ pio run -e esp32dev_wokwi_tft    # прошивка с TFT (для схемы с
 
 ```bash
 pio --version
-pio run -e esp32dev              # реальная плата, TFT выключен
-pio run -e esp32dev_wokwi_tft    # симулятор / профиль с дисплеем
+pio run -e esp32dev              # реальная плата + ST7789V
+pio run -e esp32dev_wokwi_tft    # симулятор Wokwi
 ```
 
 ---
@@ -80,22 +78,29 @@ pio device monitor --baud 115200
 
 ---
 
-## GPIO
+## GPIO / распиновка реального дисплея (согласовано)
 
-Всё в [`include/config.h`](include/config.h).
+Всё в [`include/config.h`](include/config.h). Питание ESP32 — USB авто; **BLK → 3V3**.
 
-- Профиль **0** (`esp32dev`): LED GPIO 2; TFT = TBD.
-- Профиль **1** (`esp32dev_wokwi_tft`): пины под схему Wokwi; LED на 13.
+| Дисплей ST7789V | ESP32 DevKit |
+|-----------------|--------------|
+| GND | GND |
+| VCC | 3V3 |
+| SCL | D18 |
+| SDA | D23 |
+| RES | D4 |
+| DC | D2 |
+| CS | D5 |
+| BLK | 3V3 |
 
-Не копируйте wokwi-пины на физический дисплей без проверки модуля.
+Профиль **1** (`esp32dev_wokwi_tft`) — те же пины TFT; отличаются только драйвер чипа и потенциометр.
 
 ---
 
 ## Что дальше
 
-1. UI в расширении Wokwi (потенциометр, цвета, OVERHEAT).
-2. Реальный ESP32 + распиновка ST7789.
-3. Bluetooth → ScanX; coolant, затем oil после проверки на FA20.
+1. Собрать/прошить реальное железо по таблице выше (с согласия).
+2. Bluetooth → ScanX; coolant `01 05`, oil `22 10 E7` по ТЗ.
 
 ---
 

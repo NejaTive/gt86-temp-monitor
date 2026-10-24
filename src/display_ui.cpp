@@ -10,7 +10,8 @@
 
 #if HW_PROFILE == 1
 #include <Adafruit_ILI9341.h>
-static Adafruit_ILI9341 tft = Adafruit_ILI9341(PIN_TFT_CS, PIN_TFT_DC);
+static Adafruit_ILI9341 tft =
+    Adafruit_ILI9341(PIN_TFT_CS, PIN_TFT_DC, PIN_TFT_RST);
 #define COLOR_BLACK ILI9341_BLACK
 #define COLOR_WHITE ILI9341_WHITE
 #define COLOR_RED ILI9341_RED
