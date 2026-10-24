@@ -1,7 +1,5 @@
 #include "temp_sim.h"
 
-#if ENABLE_TEMP_SIM
-
 static float coolantC = 0.0f;
 static float oilC = 0.0f;
 
@@ -25,5 +23,3 @@ void tempSimSetOilC(float celsius) {
 }
 
 TempReading tempSimReading() { return TempReading{coolantC, oilC}; }
-
-#endif

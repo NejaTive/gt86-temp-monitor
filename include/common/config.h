@@ -3,9 +3,10 @@
  *
  * HW_PROFILE только из platformio.ini (-DHW_PROFILE=…):
  *   0 → config_prod.h  (машина, ST7789V, OBD)
- *   1 → config_dev.h   (Wokwi, ILI9341 + pot)
+ *   1 → config_sim.h   (Wokwi, ILI9341 + pot)
  *
  * Код везде включает только этот файл: #include "config.h"
+ * Пути include/common + include/prod|sim задаются в platformio.ini.
  */
 
 #pragma once
@@ -17,7 +18,7 @@
 #define SERIAL_BAUD 115200
 
 // ---------------------------------------------------------------------------
-// Пороги цвета температуры (°C) — общие для DEV и PROD
+// Пороги цвета температуры (°C) — общие для SIM и PROD
 //   ниже TEMP_GREEN_FROM_C → жёлтый
 //   TEMP_GREEN_FROM_C … TEMP_RED_FROM_C-1 → зелёный
 //   TEMP_RED_FROM_C и выше → красный
@@ -40,7 +41,7 @@
 #define ENABLE_TFT 1
 
 #if HW_PROFILE == 1
-#include "config_dev.h"
+#include "config_sim.h"
 #else
 #include "config_prod.h"
 #endif

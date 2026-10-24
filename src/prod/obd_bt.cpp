@@ -1,7 +1,5 @@
 #include "obd_bt.h"
 
-#if ENABLE_OBD
-
 #include "BluetoothSerial.h"
 
 #include <string.h>
@@ -78,5 +76,3 @@ int obdBtRead() {
   }
   return serialBt.read();
 }
-
-#endif  // ENABLE_OBD

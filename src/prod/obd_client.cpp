@@ -1,7 +1,5 @@
 #include "obd_client.h"
 
-#if ENABLE_OBD
-
 #include "obd_bt.h"
 #include "obd_parse.h"
 #include "ui_status.h"
@@ -311,4 +309,3 @@ ObdReading obdClientReading() {
   return r;
 }
 
-#endif  // ENABLE_OBD

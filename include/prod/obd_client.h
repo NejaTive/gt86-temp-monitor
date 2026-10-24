@@ -16,19 +16,7 @@ struct ObdReading {
   const char *status;  // короткий статус для UI (статическая строка)
 };
 
-#if ENABLE_OBD
-
 void obdClientBegin();
 /** Неблокирующий тик: вызывать из loop() часто */
 void obdClientPoll();
 ObdReading obdClientReading();
-
-#else
-
-inline void obdClientBegin() {}
-inline void obdClientPoll() {}
-inline ObdReading obdClientReading() {
-  return ObdReading{-999.0f, -999.0f, false, false, "Offline"};
-}
-
-#endif

@@ -18,52 +18,56 @@ Current code status:
 - UI (°C only), labels and values centered; short BT/OBD status top-left
 - Fresh value `95 C`, stale `95* C`, no data `-- C`
 - Thresholds in `config.h`: green from 80 °C, red from 115 °C
-- **DEV** (`esp32dev_wokwi_tft`): 2 pots (coolant / oil); green **BT** button = connect/disconnect (no real Bluetooth)
+- **SIM** (`esp32dev_wokwi_tft`): 2 pots (coolant / oil); green **BT** button = connect/disconnect (no real Bluetooth)
 - **PROD** (`esp32dev`): OBD over Bluetooth Classic SPP — coolant `01 05`, oil `22 10 E7` (not `01 5C`)
 
 ---
 
 ## Layout
 
+One repo, folders by role (`common` / `prod` / `sim`):
+
 ```
 gt86-temp-monitor/
 ├── platformio.ini
-├── wokwi.toml              # Wokwi extension → PlatformIO firmware
-├── diagram.json            # Wokwi simulator schematic
-├── include/config.h        # shared: thresholds, TFT pins; picks profile
-├── include/config_dev.h    # Wokwi DEV: 2 pots, BT button, 240×320
-├── include/config_prod.h   # car PROD: OBD_BT_NAME / PIN, 240×240
-├── include/bt_sim.h        # DEV only: button toggles fake BT link
-├── include/ui_status.h     # human-readable status texts (Online, …)
-├── include/obd_parse.h     # response → °C (no Bluetooth)
-├── include/obd_bt.h        # Classic SPP wrapper
-├── include/obd_client.h    # ELM init + sequential poll
+├── wokwi.toml                 # Wokwi extension → PlatformIO firmware
+├── diagram.json               # Wokwi simulator schematic
+├── include/
+│   ├── common/                # shared: config.h, UI, obd_parse
+│   ├── prod/                  # config_prod.h, obd_bt, obd_client
+│   └── sim/                   # config_sim.h, bt_sim, temp_sim, sim_controls
 ├── src/
-├── test/test_obd_parse/    # parser unit tests (TZ examples)
+│   ├── common/                # display_ui, obd_parse
+│   ├── prod/                  # obd_*, main.cpp (car)
+│   └── sim/                   # bt_sim, temp_sim, sim_controls, main.cpp (Wokwi)
+├── test/test_obd_parse/       # parser unit tests (TZ examples)
 ├── README.md
 └── README.ru.md
 ```
 
+`esp32dev` builds only `common` + `prod`. `esp32dev_wokwi_tft` builds only `common` + `sim`.
+
 ---
 
-## DEV vs PROD
+## SIM vs PROD
 
-| | Wokwi DEV | Car PROD |
+| | Wokwi SIM | Car PROD |
 |---|-----------|----------|
 | PlatformIO env | `esp32dev_wokwi_tft` | `esp32dev` |
 | `HW_PROFILE` | 1 | 0 |
+| Source folders | `common` + `sim` | `common` + `prod` |
 | Data source | 2 pots / Serial (when BT-SIM connected) | ScanX OBD |
 | TFT | ILI9341 stand-in | ST7789V |
 | Bluetooth | simulated by green button (GPIO27) | Classic SPP |
 
-Edit adapter name and PIN in [`include/config_prod.h`](include/config_prod.h):
+Edit adapter name and PIN in [`include/prod/config_prod.h`](include/prod/config_prod.h):
 
 ```c
 #define OBD_BT_NAME "ScanX"   // exact name from phone Bluetooth list
 #define OBD_BT_PIN  "1234"
 ```
 
-DEV pots / SIM range: [`include/config_dev.h`](include/config_dev.h). Shared thresholds and TFT pins: [`include/config.h`](include/config.h).
+SIM pots / range: [`include/sim/config_sim.h`](include/sim/config_sim.h). Shared thresholds and TFT pins: [`include/common/config.h`](include/common/config.h).
 
 On the car: only this project should use the adapter (disconnect Car Scanner / phone BT).
 
@@ -124,7 +128,7 @@ pio device monitor --baud 115200
 
 ### How to verify PIDs in Serial Monitor
 
-1. Set `OBD_BT_NAME` / `OBD_BT_PIN` in `config_prod.h`, upload, open monitor at 115200.
+1. Set `OBD_BT_NAME` / `OBD_BT_PIN` in `include/prod/config_prod.h`, upload, open monitor at 115200.
 2. Watch `[BT]` / `[OBD]` / `[BT<<]` lines.
 3. **Coolant:** firmware sends `0105`; expect a line containing `41 05` then a data byte.  
    °C = byte − 40 (example `7E80341056D` → 69 °C).
@@ -139,7 +143,7 @@ First BT connect by name can take up to ~30 s (device inquiry).
 
 ## GPIO / real display wiring (agreed)
 
-TFT pins in [`include/config.h`](include/config.h) (same for DEV and PROD). ESP32 from car USB; **BLK → 3V3**.
+TFT pins in [`include/common/config.h`](include/common/config.h) (same for SIM and PROD). ESP32 from car USB; **BLK → 3V3**.
 
 | ST7789V | ESP32 DevKit |
 |---------|--------------|
@@ -152,7 +156,7 @@ TFT pins in [`include/config.h`](include/config.h) (same for DEV and PROD). ESP3
 | CS | D5 |
 | BLK | 3V3 |
 
-Profile **1** (`esp32dev_wokwi_tft`) uses the same TFT pins; only the chip driver and DEV pots/button differ.
+Profile **1** (`esp32dev_wokwi_tft`) uses the same TFT pins; only the chip driver and SIM pots/button differ.
 
 ---
 

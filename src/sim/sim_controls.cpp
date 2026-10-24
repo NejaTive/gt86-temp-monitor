@@ -6,10 +6,6 @@ void simControlsBegin() {
 }
 
 void simControlsPoll() {
-#if !ENABLE_TEMP_SIM
-  return;
-#else
-
   auto rawToC = [](int raw) -> float {
     return (float)TEMP_SIM_MIN_C +
            (raw / 4095.0f) * (float)(TEMP_SIM_MAX_C - TEMP_SIM_MIN_C);
@@ -49,6 +45,4 @@ void simControlsPoll() {
       line[len++] = ch;
     }
   }
-
-#endif
 }

@@ -8,15 +8,11 @@
 
 #pragma once
 
-#define ENABLE_TEMP_SIM 0
-#define ENABLE_OBD 1
-#define ENABLE_BT_SIM 0
-
 #define TFT_WIDTH 240
 #define TFT_HEIGHT 240  // 1.54" IPS ST7789V
 #define PIN_POT_COOLANT -1 // на машине потенциометров нет
 #define PIN_POT_OIL -1
-#define PIN_BTN_BT_SIM -1  // кнопка BT-SIM только на DEV
+#define PIN_BTN_BT_SIM -1  // кнопка BT-SIM только в SIM
 
 // ----- Bluetooth OBD (Classic SPP, ELM327-совместимый ScanX) -----
 // Имя — как в списке Bluetooth телефона

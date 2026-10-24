@@ -1,7 +1,5 @@
 #include "bt_sim.h"
 
-#if ENABLE_BT_SIM
-
 #include "ui_status.h"
 
 enum BtSimState : uint8_t {
@@ -80,5 +78,3 @@ const char *btSimStatus() {
       return UI_STATUS_OFFLINE;
   }
 }
-
-#endif  // ENABLE_BT_SIM

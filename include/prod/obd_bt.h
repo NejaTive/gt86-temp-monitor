@@ -8,8 +8,6 @@
 #include <Arduino.h>
 #include "config.h"
 
-#if ENABLE_OBD
-
 bool obdBtBegin();
 bool obdBtConnect();
 bool obdBtIsConnected();
@@ -22,5 +20,3 @@ void obdBtSendLine(const char *line);
 int obdBtAvailable();
 
 int obdBtRead();
-
-#endif  // ENABLE_OBD

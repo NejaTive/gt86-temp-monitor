@@ -1,5 +1,5 @@
 /**
- * DEV-стенд: Wokwi
+ * SIM-стенд: Wokwi
  * Подключается из config.h при HW_PROFILE == 1
  *
  * Меняй здесь: экран симулятора, два pot (ОЖ / масло), диапазон SIM.
@@ -7,10 +7,6 @@
  */
 
 #pragma once
-
-#define ENABLE_TEMP_SIM 1
-#define ENABLE_OBD 0
-#define ENABLE_BT_SIM 1  // обязательно с SIM: кнопка connect/disconnect
 
 #define TFT_WIDTH 240
 #define TFT_HEIGHT 320     // ILI9341 stand-in в Wokwi
