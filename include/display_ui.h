@@ -1,7 +1,8 @@
 /**
  * Layout per sensor:
  *   Name
- *   Value C
+ *   Value C   (устаревшее: NN* C)
+ * Краткий статус BT/OBD — сверху слева (см. ui_status.h).
  */
 
 #pragma once
@@ -12,6 +13,9 @@
 struct DisplayStatus {
   float coolantC;
   float oilC;
+  bool coolantStale;
+  bool oilStale;
+  const char *status;  // например UI_STATUS_ONLINE
 };
 
 void displayBegin();

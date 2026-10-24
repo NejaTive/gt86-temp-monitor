@@ -2,7 +2,8 @@
 
 #if ENABLE_TEMP_SIM
 
-static float valueC = 0.0f;
+static float coolantC = 0.0f;
+static float oilC = 0.0f;
 
 static float clampf(float v, float lo, float hi) {
   if (v < lo) return lo;
@@ -10,12 +11,19 @@ static float clampf(float v, float lo, float hi) {
   return v;
 }
 
-void tempSimBegin() { valueC = 0.0f; }
-
-void tempSimSetC(float celsius) {
-  valueC = clampf(celsius, (float)TEMP_SIM_MIN_C, (float)TEMP_SIM_MAX_C);
+void tempSimBegin() {
+  coolantC = 0.0f;
+  oilC = 0.0f;
 }
 
-TempReading tempSimReading() { return TempReading{valueC, valueC}; }
+void tempSimSetCoolantC(float celsius) {
+  coolantC = clampf(celsius, (float)TEMP_SIM_MIN_C, (float)TEMP_SIM_MAX_C);
+}
+
+void tempSimSetOilC(float celsius) {
+  oilC = clampf(celsius, (float)TEMP_SIM_MIN_C, (float)TEMP_SIM_MAX_C);
+}
+
+TempReading tempSimReading() { return TempReading{coolantC, oilC}; }
 
 #endif

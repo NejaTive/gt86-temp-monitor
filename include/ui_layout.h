@@ -50,9 +50,13 @@ inline int16_t uiSensorBlockTop(int16_t screenH, int16_t warningH,
   return block * index;
 }
 
-inline void uiFormatTempC(char *buf, size_t buflen, float celsius) {
+/** Свежее: "95 C"; устаревшее: "95* C"; нет данных: "-- C" */
+inline void uiFormatTempC(char *buf, size_t buflen, float celsius,
+                          bool stale = false) {
   if (celsius < -100.0f) {
     snprintf(buf, buflen, "-- C");
+  } else if (stale) {
+    snprintf(buf, buflen, "%d* C", (int)lroundf(celsius));
   } else {
     snprintf(buf, buflen, "%d C", (int)lroundf(celsius));
   }

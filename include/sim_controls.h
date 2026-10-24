@@ -1,5 +1,5 @@
 /**
- * Manual temp input: potentiometer and/or Serial number.
+ * Ручной ввод температур: два потенциометра и/или Serial.
  */
 
 #pragma once

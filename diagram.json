@@ -19,10 +19,24 @@
     },
     {
       "type": "wokwi-potentiometer",
-      "id": "pot1",
+      "id": "potCoolant",
       "top": 40,
       "left": 250,
-      "attrs": { "value": "0" }
+      "attrs": { "value": "0", "color": "green", "label": "Coolant" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "potOil",
+      "top": 40,
+      "left": 360,
+      "attrs": { "value": "0", "color": "green", "label": "Oil" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 160,
+      "left": 250,
+      "attrs": { "color": "green", "label": "BT" }
     }
   ],
   "connections": [
@@ -36,9 +50,14 @@
     ["lcd1:D/C", "esp:2", "orange", []],
     ["lcd1:RST", "esp:4", "blue", []],
     ["lcd1:LED", "esp:3V3", "pink", []],
-    ["pot1:GND", "esp:GND.1", "black", []],
-    ["pot1:VCC", "esp:3V3", "red", []],
-    ["pot1:SIG", "esp:34", "orange", []]
+    ["potCoolant:GND", "esp:GND.1", "black", []],
+    ["potCoolant:VCC", "esp:3V3", "red", []],
+    ["potCoolant:SIG", "esp:34", "orange", []],
+    ["potOil:GND", "esp:GND.1", "black", []],
+    ["potOil:VCC", "esp:3V3", "red", []],
+    ["potOil:SIG", "esp:35", "orange", []],
+    ["btn1:1.l", "esp:GND.2", "black", []],
+    ["btn1:2.l", "esp:27", "green", []]
   ],
   "dependencies": {}
 }

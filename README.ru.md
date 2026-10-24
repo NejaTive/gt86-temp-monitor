@@ -6,8 +6,8 @@
 
 Целевое железо:
 
-- **Контроллер:** ESP32-WROOM-32 (DevKit V1), Bluetooth Classic
-- **OBD-II:** ROKODIL ScanX
+- **Контроллер:** ESP32-WROOM-32 (DevKit V1), Bluetooth Classic SPP
+- **OBD-II:** ROKODIL ScanX (совместим с ELM327)
 - **Дисплей:** TFT IPS 1,54″ 240×240 **ST7789V** (SPI) — распиновка согласована (см. ниже)
 - **Питание ESP32:** штатный USB автомобиля (подсветка вместе с питанием)
 
@@ -15,10 +15,11 @@
 
 Сейчас в коде:
 
-- UI (только °C), названия и значения по центру
+- UI (только °C), названия и значения по центру; краткий статус BT/OBD слева сверху
+- Свежее `95 C`, устаревшее `95* C`, нет данных `-- C`
 - пороги в `config.h`: зелёный с 80 °C, красный с 115 °C
-- SIM: температура с потенциометра (0…120 °C)
-- OBD / PID масла — ещё нет
+- **DEV** (`esp32dev_wokwi_tft`): 2 pot (ОЖ / масло); зелёная кнопка **BT** = connect/disconnect (без реального Bluetooth)
+- **PROD** (`esp32dev`): OBD по Bluetooth Classic SPP — coolant `01 05`, oil `22 10 E7` (не `01 5C`)
 
 ---
 
@@ -29,11 +30,42 @@ gt86-temp-monitor/
 ├── platformio.ini
 ├── wokwi.toml              # расширение Wokwi → прошивка PlatformIO
 ├── diagram.json            # схема для симулятора Wokwi
-├── include/config.h
+├── include/config.h        # общее: пороги, пины TFT; выбирает профиль
+├── include/config_dev.h    # Wokwi DEV: 2 pot, кнопка BT, 240×320
+├── include/config_prod.h   # машина PROD: OBD_BT_NAME / PIN, 240×240
+├── include/bt_sim.h        # только DEV: кнопка = фейковый BT
+├── include/ui_status.h     # понятные статусы на экране (Online, …)
+├── include/obd_parse.h     # ответ → °C (без Bluetooth)
+├── include/obd_bt.h        # обёртка Classic SPP
+├── include/obd_client.h    # init ELM + последовательный опрос
 ├── src/
+├── test/test_obd_parse/    # unit-тесты парсера (примеры из ТЗ)
 ├── README.md
 └── README.ru.md
 ```
+
+---
+
+## DEV vs PROD
+
+| | Wokwi DEV | Машина PROD |
+|---|-----------|-------------|
+| env PlatformIO | `esp32dev_wokwi_tft` | `esp32dev` |
+| `HW_PROFILE` | 1 | 0 |
+| Источник данных | 2 pot / Serial (если BT-SIM «подключён») | ScanX OBD |
+| TFT | ILI9341 stand-in | ST7789V |
+| Bluetooth | симуляция зелёной кнопкой (GPIO27) | Classic SPP |
+
+Имя адаптера и PIN — в [`include/config_prod.h`](include/config_prod.h):
+
+```c
+#define OBD_BT_NAME "ScanX"   // как в списке Bluetooth телефона
+#define OBD_BT_PIN  "1234"
+```
+
+Два pot / диапазон SIM для DEV: [`include/config_dev.h`](include/config_dev.h). Общие пороги и пины TFT: [`include/config.h`](include/config.h).
+
+В машине к адаптеру должен быть подключён только этот проект (отключи Car Scanner / BT телефона).
 
 ---
 
@@ -53,7 +85,13 @@ pio run -e esp32dev_wokwi_tft    # прошивка с TFT (для схемы с
 
 Нужны файлы в корне: `wokwi.toml` + `diagram.json` (уже есть).
 
-В схеме симулятора дисплей — **ILI9341** (встроенный в Wokwi). Реальный модуль — **ST7789V**. GPIO TFT совпадает с таблицей ниже; в Wokwi дополнительно потенциометр на GPIO34.
+В схеме симулятора дисплей — **ILI9341** (встроенный в Wokwi). Реальный модуль — **ST7789V**. GPIO TFT совпадает с таблицей ниже.
+
+В Wokwi дополнительно:
+
+- Pot **GPIO34** → ОЖ 0…120 °C (только пока «BT подключён»)
+- Pot **GPIO35** → масло 0…120 °C (только пока «BT подключён»)
+- Зелёная кнопка **BT** **GPIO27** → connect с задержкой (`Offline` → `Connecting` → `Starting` → `Online` + °C); ещё раз → `Offline`
 
 ---
 
@@ -63,24 +101,45 @@ pio run -e esp32dev_wokwi_tft    # прошивка с TFT (для схемы с
 
 ```bash
 pio --version
-pio run -e esp32dev              # реальная плата + ST7789V
+pio run -e esp32dev              # реальная плата + ST7789V + OBD
 pio run -e esp32dev_wokwi_tft    # симулятор Wokwi
+```
+
+Unit-тесты парсера (примеры из ТЗ, на Mac — плата не нужна):
+
+```bash
+pio test -e native
 ```
 
 ---
 
 ## Загрузка на ESP32
 
+Только с твоего явного согласия (нужна подключённая плата):
+
 ```bash
 pio run -e esp32dev -t upload
 pio device monitor --baud 115200
 ```
 
+### Как проверить PID в Serial Monitor
+
+1. Пропиши `OBD_BT_NAME` / `OBD_BT_PIN` в `config_prod.h`, прошей, открой монитор 115200.
+2. Смотри строки `[BT]` / `[OBD]` / `[BT<<]`.
+3. **Coolant:** прошивка шлёт `0105`; в ответе должно быть `41 05` и байт данных.  
+   °C = байт − 40 (пример `7E80341056D` → 69 °C).
+4. **Oil:** после `ATSH7E0` шлётся `2210E7`; жди `62 10 E7` и байт.  
+   °C = байт − 40 (пример `7E8046210E76E` → 70 °C).  
+   **Не** используй `01 5C` (на авто — NO DATA).
+5. UI: live `NN C`, устаревшее `NN* C`, нет данных `-- C`; статус вроде `Connecting` / `Online` / `Offline`.
+
+Первое подключение BT по имени может занять до ~30 с (поиск устройства).
+
 ---
 
 ## GPIO / распиновка реального дисплея (согласовано)
 
-Всё в [`include/config.h`](include/config.h). Питание ESP32 — USB авто; **BLK → 3V3**.
+Пины TFT в [`include/config.h`](include/config.h) (одинаковы для DEV и PROD). Питание ESP32 — USB авто; **BLK → 3V3**.
 
 | Дисплей ST7789V | ESP32 DevKit |
 |-----------------|--------------|
@@ -99,11 +158,12 @@ pio device monitor --baud 115200
 
 ## Что дальше
 
-1. Собрать/прошить реальное железо по таблице выше (с согласия).
-2. Bluetooth → ScanX; coolant `01 05`, oil `22 10 E7` по ТЗ.
+1. Уточнить `OBD_BT_NAME` / PIN в `config_prod.h`; прошивка — с согласия.
+2. Проверка в авто: coolant + oil рядом с Car Scanner (телефон от адаптера отключён).
+3. По желанию: подключение по MAC, если поиск по имени долгий.
 
 ---
 
 ## Статус
 
-Pet-проект в разработке.
+Pet-проект — OBD-клиент и парсер добавлены; на железе нужно проверить до доверия показаниям в поездке.

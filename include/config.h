@@ -1,54 +1,34 @@
 /**
- * Hardware + UI configuration for GT86 Temperature Monitor
+ * Общий конфиг + выбор профиля.
  *
- * HW_PROFILE 0 = real ESP32 DevKit + ST7789V 1.54" (agreed wiring below)
- * HW_PROFILE 1 = Wokwi simulator (ILI9341 stand-in + pot; same TFT pins as car)
+ * HW_PROFILE только из platformio.ini (-DHW_PROFILE=…):
+ *   0 → config_prod.h  (машина, ST7789V, OBD)
+ *   1 → config_dev.h   (Wokwi, ILI9341 + pot)
+ *
+ * Код везде включает только этот файл: #include "config.h"
  */
 
 #pragma once
 
-#ifndef HW_PROFILE
-#define HW_PROFILE 0
-#endif
 
-#ifndef SERIAL_BAUD
+// ======================================================
+// скорость Serial
+// ======================================================
 #define SERIAL_BAUD 115200
-#endif
 
 // ---------------------------------------------------------------------------
-// Temperature color thresholds (°C) — edit HERE only
-//   below TEMP_GREEN_FROM_C → yellow
-//   TEMP_GREEN_FROM_C … TEMP_RED_FROM_C-1 → green
-//   TEMP_RED_FROM_C and above → red
+// Пороги цвета температуры (°C) — общие для DEV и PROD
+//   ниже TEMP_GREEN_FROM_C → жёлтый
+//   TEMP_GREEN_FROM_C … TEMP_RED_FROM_C-1 → зелёный
+//   TEMP_RED_FROM_C и выше → красный
 // ---------------------------------------------------------------------------
-#ifndef TEMP_GREEN_FROM_C
 #define TEMP_GREEN_FROM_C 80
-#endif
-
-#ifndef TEMP_RED_FROM_C
 #define TEMP_RED_FROM_C 115
-#endif
 
 // ---------------------------------------------------------------------------
-// Temperature simulation (potentiometer) — DEV / Wokwi only
-// On real car (HW_PROFILE 0) pot is disabled; data will come from OBD later.
-// ---------------------------------------------------------------------------
-#ifndef ENABLE_TEMP_SIM
-#define ENABLE_TEMP_SIM 1
-#endif
-
-#ifndef TEMP_SIM_MIN_C
-#define TEMP_SIM_MIN_C 0
-#endif
-
-#ifndef TEMP_SIM_MAX_C
-#define TEMP_SIM_MAX_C 120
-#endif
-
-// ---------------------------------------------------------------------------
-// TFT SPI pinout (same on car and Wokwi stand)
+// TFT SPI — одинаково на машине и на Wokwi
 //   SCL→D18  SDA→D23  CS→D5  DC→D2  RES→D4  BLK→3V3
-// Onboard LED shares GPIO2 with DC — do not use as status LED
+// Onboard LED на GPIO2 занят DC — не использовать как status LED
 // ---------------------------------------------------------------------------
 #define PIN_STATUS_LED -1
 #define PIN_TFT_SCLK 18
@@ -60,15 +40,7 @@
 #define ENABLE_TFT 1
 
 #if HW_PROFILE == 1
-// ----- Wokwi (ILI9341 stand-in + pot on GPIO34) -----
-#define TFT_WIDTH 240
-#define TFT_HEIGHT 320
-#define PIN_POT_TEMP 34
-
+#include "config_dev.h"
 #else
-// ----- Real hardware: 1.54" IPS 240x240 ST7789V -----
-#define TFT_WIDTH 240
-#define TFT_HEIGHT 240
-#define PIN_POT_TEMP -1  // no pot on car build
-
-#endif  // HW_PROFILE
+#include "config_prod.h"
+#endif
