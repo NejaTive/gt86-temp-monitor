@@ -50,6 +50,15 @@ static void clearRx() {
   rxBuf[0] = '\0';
 }
 
+static void drainBt() {
+  while (obdBtAvailable() > 0) {
+    if (obdBtRead() < 0) {
+      break;
+    }
+  }
+  clearRx();
+}
+
 static void setState(ObdState next) {
   state = next;
   stateSinceMs = millis();
@@ -131,7 +140,7 @@ static const char *kSetupCmds[] = {
     "ATL0",
     "ATS0",
     "ATH1",
-    "ATSP0",
+    "ATSP6",
     "ATSH7E0",
 };
 
@@ -147,11 +156,13 @@ static const uint8_t kPidCount =
     (uint8_t)(sizeof(kPids) / sizeof(kPids[0]));
 
 static void sendSetupCmd(uint8_t step) {
+  drainBt();
   restartWait();
   obdBtSendLine(kSetupCmds[step]);
 }
 
 static void sendPidCmd(uint8_t index) {
+  drainBt();
   setState(ST_WAIT_PID);
   obdBtSendLine(kPids[index].cmd);
 }
@@ -203,6 +214,7 @@ void obdClientPoll() {
         setStatus(UI_STATUS_STARTING);
         setupStep = 0;
         setState(ST_ELM_SETUP);
+        drainBt();
         obdBtSendLine(kSetupCmds[0]);
       } else {
         startReconnect();
@@ -249,6 +261,7 @@ void obdClientPoll() {
         handlePidParse(pid.parse(rxBuf, &valueC), pid.apply, valueC);
       } else {
         setStatus(UI_STATUS_TIMEOUT);
+        drainBt();
       }
       advancePidOrIdle();
       break;
