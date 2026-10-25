@@ -7,6 +7,7 @@ bool obdBtBegin();
 bool obdBtConnect();
 bool obdBtIsConnected();
 void obdBtDisconnect();
+void obdBtEnd();
 
 void obdBtSendLine(const char *line);
 

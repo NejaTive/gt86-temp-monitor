@@ -31,6 +31,7 @@ struct PidStep {
 static ObdState state = ST_DISCONNECTED;
 static uint32_t stateSinceMs = 0;
 static uint32_t lastPollDoneMs = 0;
+static bool connectUiArmed = false;
 
 static char rxBuf[192];
 static size_t rxLen = 0;
@@ -117,7 +118,8 @@ static void applyOil(int c) {
 }
 
 static void startReconnect() {
-  obdBtDisconnect();
+  obdBtEnd();
+  connectUiArmed = false;
   setStatus(UI_STATUS_OFFLINE);
   setState(ST_WAIT_RECONNECT);
 }
@@ -206,6 +208,11 @@ void obdClientPoll() {
 
     case ST_CONNECTING:
       setStatus(UI_STATUS_CONNECTING);
+      if (!connectUiArmed) {
+        connectUiArmed = true;
+        break;
+      }
+      connectUiArmed = false;
       if (!obdBtBegin()) {
         startReconnect();
         break;

@@ -6,8 +6,8 @@
 
 Целевое железо:
 
-- **Контроллер:** ESP32-WROOM-32 (DevKit V1), Bluetooth Classic SPP
-- **OBD-II:** ROKODIL ScanX (совместим с ELM327)
+- **Контроллер:** ESP32-WROOM-32 (DevKit V1), Bluetooth LE (NimBLE)
+- **OBD-II:** ROKODIL ScanX (совместим с ELM327, BLE — не Classic SPP)
 - **Дисплей:** TFT IPS 1,54″ 240×240 **ST7789V** (SPI) — распиновка согласована (см. ниже)
 - **Питание ESP32:** штатный USB автомобиля (подсветка вместе с питанием)
 
@@ -19,7 +19,7 @@
 - Свежее `95 C`, устаревшее `95* C`, нет данных `-- C`
 - пороги в `config.h`: зелёный с 80 °C, красный с 115 °C
 - **SIM** (`esp32dev_wokwi_tft`): 2 pot (ОЖ / масло); зелёная кнопка **BT** = connect/disconnect (без реального Bluetooth)
-- **PROD** (`esp32dev`): OBD по Bluetooth Classic SPP — coolant `01 05`, oil `22 10 E7` (не `01 5C`)
+- **PROD** (`esp32dev`): OBD по Bluetooth LE — coolant `01 05`, oil `22 10 E7` (не `01 5C`)
 
 ---
 
@@ -58,14 +58,16 @@ gt86-temp-monitor/
 | Папки исходников | `common` + `sim` | `common` + `prod` |
 | Источник данных | 2 pot (если BT-SIM «подключён») | ScanX OBD |
 | TFT | ILI9341 stand-in | ST7789V |
-| Bluetooth | симуляция зелёной кнопкой (GPIO27) | Classic SPP |
+| Bluetooth | симуляция зелёной кнопкой (GPIO27) | BLE (NimBLE client) |
 
-Имя адаптера и PIN — в [`include/prod/config_prod.h`](include/prod/config_prod.h):
+BLE MAC / имя адаптера — в [`include/prod/config_prod.h`](include/prod/config_prod.h):
 
 ```c
-#define OBD_BT_NAME "ScanX"   // как в списке Bluetooth телефона
-#define OBD_BT_PIN  "1234"
+#define OBD_BT_NAME "Rokodil ScanX"   // запасной поиск по имени
+#define OBD_BT_ADDR { 0x22, 0xC0, 0xC0, 0x06, 0x61, 0x0F }  // BLE MAC
 ```
+
+ScanX — **только BLE** (BK3432). Classic SPP не подойдёт. Пока ESP подключается, телефон должен быть отключён от адаптера. GATT по умолчанию: `FFF0`/`FFF1`/`FFF2` (также пробуются `FFE0`/`18F0`).
 
 Два pot / диапазон SIM: [`include/sim/config_sim.h`](include/sim/config_sim.h). Общие пороги и пины TFT: [`include/common/config.h`](include/common/config.h).
 
@@ -129,12 +131,12 @@ USB Serial в прошивке не используется (нет логов 
 
 ### Как проверить OBD в машине
 
-1. Пропиши `OBD_BT_NAME` / `OBD_BT_PIN` в `include/prod/config_prod.h`, прошей.
+1. Пропиши `OBD_BT_ADDR` (и имя) в `include/prod/config_prod.h`, прошей. Телефон должен быть отключён от адаптера.
 2. На TFT: статус `Connecting` → `Starting` → `Online`; значения `NN C` / устаревшее `NN* C` / нет данных `-- C`.
 3. Прошивка запрашивает coolant `0105` и oil `2210E7` (после `ATSH7E0`). **Не** используй PID масла `01 5C` (на авто — NO DATA).
 4. По желанию сверь с Car Scanner (телефон от адаптера отключён).
 
-Первое подключение BT по имени может занять до ~30 с (поиск устройства).
+Первое BLE-подключение может занять несколько секунд (MAC, затем поиск по имени).
 
 ---
 
@@ -159,9 +161,8 @@ USB Serial в прошивке не используется (нет логов 
 
 ## Что дальше
 
-1. Уточнить `OBD_BT_NAME` / PIN в `config_prod.h`; прошивка — с согласия.
+1. Уточнить `OBD_BT_ADDR` в `config_prod.h`; прошивка — с согласия.
 2. Проверка в авто: coolant + oil рядом с Car Scanner (телефон от адаптера отключён).
-3. По желанию: подключение по MAC, если поиск по имени долгий.
 
 ---
 

@@ -6,8 +6,8 @@ Oil and coolant temperature monitor for **Toyota GT86 (2012–2014, FA20)**.
 
 Target hardware:
 
-- **MCU:** ESP32-WROOM-32 (DevKit V1), Bluetooth Classic SPP
-- **OBD-II:** ROKODIL ScanX (ELM327-compatible)
+- **MCU:** ESP32-WROOM-32 (DevKit V1), Bluetooth LE (NimBLE)
+- **OBD-II:** ROKODIL ScanX (ELM327-compatible, BLE — not Classic SPP)
 - **Display:** TFT IPS 1.54″ 240×240 **ST7789V** (SPI) — pinout agreed (see below)
 - **ESP32 power:** car USB (backlight follows USB/ACC power)
 
@@ -19,7 +19,7 @@ Current code status:
 - Fresh value `95 C`, stale `95* C`, no data `-- C`
 - Thresholds in `config.h`: green from 80 °C, red from 115 °C
 - **SIM** (`esp32dev_wokwi_tft`): 2 pots (coolant / oil); green **BT** button = connect/disconnect (no real Bluetooth)
-- **PROD** (`esp32dev`): OBD over Bluetooth Classic SPP — coolant `01 05`, oil `22 10 E7` (not `01 5C`)
+- **PROD** (`esp32dev`): OBD over Bluetooth LE — coolant `01 05`, oil `22 10 E7` (not `01 5C`)
 
 ---
 
@@ -58,14 +58,16 @@ gt86-temp-monitor/
 | Source folders | `common` + `sim` | `common` + `prod` |
 | Data source | 2 pots (when BT-SIM connected) | ScanX OBD |
 | TFT | ILI9341 stand-in | ST7789V |
-| Bluetooth | simulated by green button (GPIO27) | Classic SPP |
+| Bluetooth | simulated by green button (GPIO27) | BLE (NimBLE client) |
 
-Edit adapter name and PIN in [`include/prod/config_prod.h`](include/prod/config_prod.h):
+Edit adapter BLE MAC / name in [`include/prod/config_prod.h`](include/prod/config_prod.h):
 
 ```c
-#define OBD_BT_NAME "ScanX"   // exact name from phone Bluetooth list
-#define OBD_BT_PIN  "1234"
+#define OBD_BT_NAME "Rokodil ScanX"   // scan fallback
+#define OBD_BT_ADDR { 0x22, 0xC0, 0xC0, 0x06, 0x61, 0x0F }  // BLE MAC
 ```
+
+ScanX is **BLE only** (BK3432). Classic SPP will not work. Phone must be disconnected from the adapter while ESP connects. GATT defaults: `FFF0`/`FFF1`/`FFF2` (also tries `FFE0`/`18F0`).
 
 SIM pots / range: [`include/sim/config_sim.h`](include/sim/config_sim.h). Shared thresholds and TFT pins: [`include/common/config.h`](include/common/config.h).
 
@@ -129,12 +131,12 @@ No USB Serial in firmware (no logs, no typed temps). Check behaviour on the **TF
 
 ### How to verify OBD on the car
 
-1. Set `OBD_BT_NAME` / `OBD_BT_PIN` in `include/prod/config_prod.h`, upload.
+1. Set `OBD_BT_ADDR` (and name) in `include/prod/config_prod.h`, upload. Phone must be disconnected from the adapter.
 2. On the TFT: status should go `Connecting` → `Starting` → `Online`; values `NN C` / stale `NN* C` / missing `-- C`.
 3. Firmware asks coolant `0105` and oil `2210E7` (after `ATSH7E0`). Do **not** use oil PID `01 5C` (NO DATA on this car).
 4. Optional cross-check with Car Scanner (phone disconnected from the adapter).
 
-First BT connect by name can take up to ~30 s (device inquiry).
+First BLE connect may take several seconds (direct MAC, then name scan fallback).
 
 ---
 
@@ -159,9 +161,8 @@ Profile **1** (`esp32dev_wokwi_tft`) uses the same TFT pins; only the chip drive
 
 ## Roadmap
 
-1. Confirm `OBD_BT_NAME` / PIN in `config_prod.h`; flash with consent.
+1. Confirm `OBD_BT_ADDR` in `config_prod.h`; flash with consent.
 2. Road test: coolant + oil vs Car Scanner (phone disconnected from adapter).
-3. Optional: connect by BT MAC if name discovery is slow.
 
 ---
 
