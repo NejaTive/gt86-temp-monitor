@@ -37,7 +37,7 @@ gt86-temp-monitor/
 │   ├── prod/                  # config_prod.h, obd_bt, obd_client
 │   └── sim/                   # config_sim.h, bt_sim, temp_sim, sim_controls
 ├── src/
-│   ├── common/                # display_ui, obd_parse
+│   ├── common/                # ui_display, obd_parse
 │   ├── prod/                  # obd_*, main.cpp (машина)
 │   └── sim/                   # bt_sim, temp_sim, sim_controls, main.cpp (Wokwi)
 ├── test/test_obd_parse/       # unit-тесты парсера (примеры из ТЗ)
@@ -56,7 +56,7 @@ gt86-temp-monitor/
 | env PlatformIO | `esp32dev_wokwi_tft` | `esp32dev` |
 | `HW_PROFILE` | 1 | 0 |
 | Папки исходников | `common` + `sim` | `common` + `prod` |
-| Источник данных | 2 pot / Serial (если BT-SIM «подключён») | ScanX OBD |
+| Источник данных | 2 pot (если BT-SIM «подключён») | ScanX OBD |
 | TFT | ILI9341 stand-in | ST7789V |
 | Bluetooth | симуляция зелёной кнопкой (GPIO27) | Classic SPP |
 
@@ -125,7 +125,7 @@ pio test -e native
 pio run -e esp32dev -t upload
 ```
 
-Отладочный вывод в Serial выключен. Смотри поведение на **TFT** (статус + °C). В SIM по желанию можно ввести `c 95` / `o 110` в панели Serial (pot работают и без этого).
+USB Serial в прошивке не используется (нет логов и ввода °C с клавиатуры). Смотри поведение на **TFT**.
 
 ### Как проверить OBD в машине
 

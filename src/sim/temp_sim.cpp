@@ -1,25 +1,25 @@
 #include "temp_sim.h"
 
-static float coolantC = 0.0f;
-static float oilC = 0.0f;
+static int16_t coolantC = 0;
+static int16_t oilC = 0;
 
-static float clampf(float v, float lo, float hi) {
+static int16_t clampi(int16_t v, int16_t lo, int16_t hi) {
   if (v < lo) return lo;
   if (v > hi) return hi;
   return v;
 }
 
 void tempSimBegin() {
-  coolantC = 0.0f;
-  oilC = 0.0f;
+  coolantC = 0;
+  oilC = 0;
 }
 
-void tempSimSetCoolantC(float celsius) {
-  coolantC = clampf(celsius, (float)TEMP_SIM_MIN_C, (float)TEMP_SIM_MAX_C);
+void tempSimSetCoolantC(int16_t celsius) {
+  coolantC = clampi(celsius, (int16_t)TEMP_SIM_MIN_C, (int16_t)TEMP_SIM_MAX_C);
 }
 
-void tempSimSetOilC(float celsius) {
-  oilC = clampf(celsius, (float)TEMP_SIM_MIN_C, (float)TEMP_SIM_MAX_C);
+void tempSimSetOilC(int16_t celsius) {
+  oilC = clampi(celsius, (int16_t)TEMP_SIM_MIN_C, (int16_t)TEMP_SIM_MAX_C);
 }
 
 TempReading tempSimReading() { return TempReading{coolantC, oilC}; }

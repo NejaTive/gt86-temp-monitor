@@ -7,7 +7,6 @@
 #pragma once
 
 #include <Adafruit_GFX.h>
-#include <math.h>
 #include <stdio.h>
 
 struct UiBounds {
@@ -51,13 +50,13 @@ inline int16_t uiSensorBlockTop(int16_t screenH, int16_t warningH,
 }
 
 /** Свежее: "95 C"; устаревшее: "95* C"; нет данных: "-- C" */
-inline void uiFormatTempC(char *buf, size_t buflen, float celsius,
+inline void uiFormatTempC(char *buf, size_t buflen, int16_t celsius,
                           bool stale = false) {
-  if (celsius < -100.0f) {
+  if (celsius < -100) {
     snprintf(buf, buflen, "-- C");
   } else if (stale) {
-    snprintf(buf, buflen, "%d* C", (int)lroundf(celsius));
+    snprintf(buf, buflen, "%d* C", (int)celsius);
   } else {
-    snprintf(buf, buflen, "%d C", (int)lroundf(celsius));
+    snprintf(buf, buflen, "%d C", (int)celsius);
   }
 }

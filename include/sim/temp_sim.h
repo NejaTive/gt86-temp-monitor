@@ -1,18 +1,14 @@
-/**
- * Ручные температуры (два pot / Serial). Не OBD.
- */
-
 #pragma once
 
 #include <Arduino.h>
 #include "config.h"
 
 struct TempReading {
-  float coolantC;
-  float oilC;
+  int16_t coolantC;
+  int16_t oilC;
 };
 
 void tempSimBegin();
-void tempSimSetCoolantC(float celsius);
-void tempSimSetOilC(float celsius);
+void tempSimSetCoolantC(int16_t celsius);
+void tempSimSetOilC(int16_t celsius);
 TempReading tempSimReading();

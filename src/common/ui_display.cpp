@@ -1,12 +1,11 @@
-#include "display_ui.h"
-#include "temp_style.h"
+#include "ui_temp_style.h"
+#include "ui_display.h"
 
 #if ENABLE_TFT
 
 #include <SPI.h>
-#include <Adafruit_GFX.h>
-#include <math.h>
 #include <string.h>
+#include <Adafruit_GFX.h>
 #include "ui_layout.h"
 
 #if HW_PROFILE == 1
@@ -36,7 +35,7 @@ static const int16_t kSensorGap = 14;
 static const uint8_t kNameSize = 2;
 static const uint8_t kValueSize = 3;
 static const uint8_t kStatusSize = 1;
-static const unsigned long kOverheatBlinkMs = 400;  // период мигания OVERHEAT
+static const uint32_t kOverheatBlinkMs = 400;
 
 static int16_t yCoolantName = 0;
 static int16_t yCoolantValue = 0;
@@ -44,12 +43,12 @@ static int16_t yOilName = 0;
 static int16_t yOilValue = 0;
 static int16_t valueAreaH = 0;
 
-static float lastCoolant = -9999.0f;
-static float lastOil = -9999.0f;
+static int16_t lastCoolant = -9999;
+static int16_t lastOil = -9999;
 static bool lastCoolantStale = false;
 static bool lastOilStale = false;
 static int8_t lastHot = -1;
-static int8_t lastOverheatOn = -1;  // фаза мигания: 1=полоска видна, 0=гасим
+static int8_t lastOverheatOn = -1;
 static char lastStatus[20] = "";
 
 static uint16_t colorForZone(TempZone zone) {
@@ -66,7 +65,6 @@ static uint16_t colorForZone(TempZone zone) {
 
 static void drawStatus(const char *status) {
   const char *s = (status != nullptr) ? status : "";
-  // Полоска под статус (не задевает зелёную точку справа)
   tft.fillRect(0, 0, TFT_WIDTH - 28, 12, COLOR_BLACK);
   tft.setTextSize(kStatusSize);
   tft.setTextColor(COLOR_WHITE);
@@ -74,18 +72,16 @@ static void drawStatus(const char *status) {
   tft.print(s);
 }
 
-static void drawValueAt(int16_t y, float celsius, bool stale) {
+static void drawValueAt(int16_t y, int16_t celsius, bool stale) {
   char valueBuf[16];
   uiFormatTempC(valueBuf, sizeof(valueBuf), celsius, stale);
   const UiBounds valB = uiMeasure(tft, valueBuf, kValueSize);
-  // Clear only the value strip, not the whole screen
   tft.fillRect(0, y, TFT_WIDTH, valueAreaH > 0 ? valueAreaH : valB.h,
                COLOR_BLACK);
   uiDrawCentered(tft, TFT_WIDTH, y, valueBuf, kValueSize,
                  colorForZone(tempZoneFromC(celsius)));
 }
 
-/** visible=true — красная полоска + OVERHEAT; false — погасить */
 static void drawWarning(bool visible) {
   const int16_t warnY = TFT_HEIGHT - kWarningH;
   tft.fillRect(0, warnY, TFT_WIDTH, kWarningH,
@@ -114,12 +110,10 @@ void displayBegin() {
   tft.fillScreen(COLOR_BLACK);
   tft.setTextWrap(false);
 
-  // Static labels once — avoids flicker on every update
   const UiBounds nameSample = uiMeasure(tft, "Coolant", kNameSize);
   const UiBounds valSample = uiMeasure(tft, "888* C", kValueSize);
   valueAreaH = valSample.h + 2;
 
-  // Чуть ниже из‑за строки статуса сверху
   yCoolantName = kTopMargin + 4;
   yCoolantValue = yCoolantName + nameSample.h + kNameValueGap;
   yOilName = yCoolantValue + valueAreaH + kSensorGap;
@@ -129,8 +123,8 @@ void displayBegin() {
                  COLOR_WHITE);
   uiDrawCentered(tft, TFT_WIDTH, yOilName, "Oil", kNameSize, COLOR_WHITE);
 
-  lastCoolant = -9999.0f;
-  lastOil = -9999.0f;
+  lastCoolant = -9999;
+  lastOil = -9999;
   lastCoolantStale = false;
   lastOilStale = false;
   lastHot = -1;
@@ -149,20 +143,16 @@ void displayShow(const DisplayStatus &status) {
     lastStatus[sizeof(lastStatus) - 1] = '\0';
   }
 
-  // Перерисовка при смене числа или флага устаревания
-  if ((int)lroundf(status.coolantC) != (int)lroundf(lastCoolant) ||
-      status.coolantStale != lastCoolantStale) {
+  if (status.coolantC != lastCoolant || status.coolantStale != lastCoolantStale) {
     drawValueAt(yCoolantValue, status.coolantC, status.coolantStale);
     lastCoolant = status.coolantC;
     lastCoolantStale = status.coolantStale;
   }
-  if ((int)lroundf(status.oilC) != (int)lroundf(lastOil) ||
-      status.oilStale != lastOilStale) {
+  if (status.oilC != lastOil || status.oilStale != lastOilStale) {
     drawValueAt(yOilValue, status.oilC, status.oilStale);
     lastOil = status.oilC;
     lastOilStale = status.oilStale;
   }
-  // OVERHEAT: пока зона HOT — мигаем; иначе гасим один раз
   if (!hot) {
     if (lastHot != 0) {
       drawWarning(false);

@@ -1,10 +1,8 @@
-#include "obd_parse.h"
-
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include "obd_parse.h"
 
-/** Убрать пробелы/CR/LF, hex → верхний регистр. dst должен быть ≥ strlen(src)+1 */
 static size_t normalizeHexish(const char *src, char *dst, size_t dstSize) {
   size_t n = 0;
   if (dstSize == 0) {
@@ -25,7 +23,6 @@ static bool looksLikeNoData(const char *norm) {
   return strstr(norm, "NODATA") != nullptr;
 }
 
-/** Два hex-символа → байт; false если не hex */
 static bool hexByteAt(const char *s, int *out) {
   if (!isxdigit((unsigned char)s[0]) || !isxdigit((unsigned char)s[1])) {
     return false;
@@ -35,12 +32,7 @@ static bool hexByteAt(const char *s, int *out) {
   return true;
 }
 
-/**
- * Ищем pattern (уже upper, без пробелов), затем один байт данных.
- * Пример pattern "4105" → следующий байт − 40 = °C.
- */
-static ObdParseStatus parseAfterPattern(const char *norm, const char *pattern,
-                                        int *outC) {
+static ObdParseStatus parseAfterPattern(const char *norm, const char *pattern, int *outC) {
   if (looksLikeNoData(norm)) {
     return OBD_PARSE_NO_DATA;
   }
@@ -71,7 +63,7 @@ ObdParseStatus obdParseCoolantC(const char *text, int *outC) {
   if (norm[0] == '\0') {
     return OBD_PARSE_UNRELATED;
   }
-  // Положительный ответ сервиса 01: 41 05 <A>
+
   return parseAfterPattern(norm, "4105", outC);
 }
 
@@ -84,6 +76,6 @@ ObdParseStatus obdParseOilC(const char *text, int *outC) {
   if (norm[0] == '\0') {
     return OBD_PARSE_UNRELATED;
   }
-  // Положительный ответ сервиса 22: 62 10 E7 <A>
+
   return parseAfterPattern(norm, "6210E7", outC);
 }

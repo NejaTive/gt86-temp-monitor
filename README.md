@@ -37,7 +37,7 @@ gt86-temp-monitor/
 │   ├── prod/                  # config_prod.h, obd_bt, obd_client
 │   └── sim/                   # config_sim.h, bt_sim, temp_sim, sim_controls
 ├── src/
-│   ├── common/                # display_ui, obd_parse
+│   ├── common/                # ui_display, obd_parse
 │   ├── prod/                  # obd_*, main.cpp (car)
 │   └── sim/                   # bt_sim, temp_sim, sim_controls, main.cpp (Wokwi)
 ├── test/test_obd_parse/       # parser unit tests (TZ examples)
@@ -56,7 +56,7 @@ gt86-temp-monitor/
 | PlatformIO env | `esp32dev_wokwi_tft` | `esp32dev` |
 | `HW_PROFILE` | 1 | 0 |
 | Source folders | `common` + `sim` | `common` + `prod` |
-| Data source | 2 pots / Serial (when BT-SIM connected) | ScanX OBD |
+| Data source | 2 pots (when BT-SIM connected) | ScanX OBD |
 | TFT | ILI9341 stand-in | ST7789V |
 | Bluetooth | simulated by green button (GPIO27) | Classic SPP |
 
@@ -125,7 +125,7 @@ Only with your explicit OK (needs a connected board):
 pio run -e esp32dev -t upload
 ```
 
-Debug Serial output is disabled. Check behaviour on the **TFT** (status + °C). In SIM you can still type `c 95` / `o 110` in the Serial panel to set temps (optional; pots work without it).
+No USB Serial in firmware (no logs, no typed temps). Check behaviour on the **TFT**.
 
 ### How to verify OBD on the car
 

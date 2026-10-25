@@ -1,18 +1,17 @@
 #include "bt_sim.h"
-
 #include "ui_status.h"
 
 enum BtSimState : uint8_t {
-  ST_DOWN = 0,  // Offline
-  ST_BT,        // Connecting
-  ST_ELM,       // Starting
-  ST_UP,        // Online
+  ST_DOWN = 0,
+  ST_BT,
+  ST_ELM,
+  ST_UP,
 };
 
 static BtSimState state = ST_DOWN;
-static unsigned long stateSinceMs = 0;
+static uint32_t stateSinceMs = 0;
 static int lastRaw = HIGH;
-static unsigned long lastEdgeMs = 0;
+static uint32_t lastEdgeMs = 0;
 
 static void setState(BtSimState next) {
   state = next;
@@ -23,7 +22,7 @@ void btSimBegin() {
   if (PIN_BTN_BT_SIM < 0) {
     return;
   }
-  pinMode(PIN_BTN_BT_SIM, INPUT_PULLUP);  // кнопка на GND, нажатие = LOW
+  pinMode(PIN_BTN_BT_SIM, INPUT_PULLUP);
   lastRaw = digitalRead(PIN_BTN_BT_SIM);
   state = ST_DOWN;
   stateSinceMs = millis();
@@ -34,10 +33,9 @@ void btSimPoll() {
     return;
   }
 
-  const unsigned long now = millis();
+  const uint32_t now = millis();
   const int raw = digitalRead(PIN_BTN_BT_SIM);
 
-  // Антидребезг + фронт нажатия (HIGH → LOW)
   if (raw != lastRaw && (now - lastEdgeMs) >= 40) {
     lastEdgeMs = now;
     if (raw == LOW && lastRaw == HIGH) {

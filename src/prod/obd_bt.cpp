@@ -1,49 +1,36 @@
+#include <string.h>
+#include "BluetoothSerial.h"
 #include "obd_bt.h"
 
-#include "BluetoothSerial.h"
-
-#include <string.h>
-
-#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
-#error Bluetooth Classic не включён в SDK. Нужен ESP32 с Bluedroid.
-#endif
-#if !defined(CONFIG_BT_SPP_ENABLED)
-#error SPP не включён. BluetoothSerial / Classic SPP недоступен.
-#endif
-
 static BluetoothSerial serialBt;
-static bool begun = false;
+static bool stackUp = false;
 
 bool obdBtBegin() {
-  if (begun) {
+  if (stackUp) {
     return true;
   }
-  // Фиксированный PIN (как у многих ELM/ScanX), не SSP-passkey
+
   serialBt.disableSSP();
-  // true = master: сами подключаемся к адаптеру
+
   if (!serialBt.begin(OBD_BT_LOCAL_NAME, true)) {
     return false;
   }
+  stackUp = true;
+
   const uint8_t pinLen = (uint8_t)strlen(OBD_BT_PIN);
-  serialBt.setPin(OBD_BT_PIN, pinLen);
-  begun = true;
-  return true;
+  return serialBt.setPin(OBD_BT_PIN, pinLen);
 }
 
 bool obdBtConnect() {
-  if (!begun && !obdBtBegin()) {
-    return false;
-  }
-  // Внимание: connect по имени может занять до ~30 с (поиск BT).
   return serialBt.connect(String(OBD_BT_NAME));
 }
 
-bool obdBtIsConnected() { return begun && serialBt.connected(); }
+bool obdBtIsConnected() {
+  return serialBt.connected();
+}
 
 void obdBtDisconnect() {
-  if (begun) {
-    serialBt.disconnect();
-  }
+  serialBt.disconnect();
 }
 
 void obdBtSendLine(const char *line) {
