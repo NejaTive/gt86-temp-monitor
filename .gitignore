@@ -18,3 +18,5 @@
 
 # Cursor local settings
 .cursor/
+.claude/
+CLAUDE.md
